@@ -1,21 +1,20 @@
 resource "aws_lambda_function" "sftp-idp" {
   filename         = "${path.module}/sftp-idp.zip"
   function_name    = "sftp-idp"
-  role             = "${aws_iam_role.iam_for_lambda_idp.arn}"
+  role             = aws_iam_role.iam_for_lambda_idp.arn
   handler          = "index.lambda_handler"
-  source_code_hash = "${data.archive_file.sftp-idp.output_base64sha256}"
+  source_code_hash = data.archive_file.sftp-idp.output_base64sha256
   runtime          = "python3.7"
   environment {
     variables = {
-      "${var.creds_store == "dynamo" ? "dynamo_table_name" : "SecretsManagerRegion"}" = "${var.creds_store == "dynamo" ? aws_dynamodb_table.authentication.name : data.aws_region.current.name}"
+      var.creds_store == "dynamo" ? "dynamo_table_name" : "SecretsManagerRegion" = var.creds_store == "dynamo" ? aws_dynamodb_table.authentication.name : data.aws_region.current.name
     }
   }
 }
 
-
 data "archive_file" "sftp-idp" {
   type        = "zip"
-  source_dir = "${path.module}/lambda/source/"
+  source_dir  = "${path.module}/lambda/source/"
   output_path = "${path.module}/sftp-idp.zip"
 }
 
@@ -37,16 +36,17 @@ resource "aws_iam_role" "iam_for_lambda_idp" {
   ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_logs_idp" {
-  role = "${aws_iam_role.iam_for_lambda_idp.name}"
+  role       = aws_iam_role.iam_for_lambda_idp.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 resource "aws_iam_policy" "sftp-idp" {
-  name = "sftp-idp"
-  path = "/"
+  name        = "sftp-idp"
+  path        = "/"
   description = "IAM policy IdP service for SFTP in Lambda"
 
   policy = <<EOF
@@ -66,14 +66,16 @@ resource "aws_iam_policy" "sftp-idp" {
     ]
 }
 EOF
+
 }
 
 resource "aws_iam_role_policy_attachment" "sftp-idp1" {
-  role = "${aws_iam_role.iam_for_lambda_idp.name}"
-  policy_arn = "${aws_iam_policy.sftp-idp.arn}"
+  role       = aws_iam_role.iam_for_lambda_idp.name
+  policy_arn = aws_iam_policy.sftp-idp.arn
 }
 
 resource "aws_iam_role_policy_attachment" "sftp-idp2" {
-  role = "${aws_iam_role.iam_for_lambda_idp.name}"
+  role       = aws_iam_role.iam_for_lambda_idp.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
